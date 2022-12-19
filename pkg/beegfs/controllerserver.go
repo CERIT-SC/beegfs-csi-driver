@@ -118,6 +118,12 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, newGrpcErrorFromCause(codes.InvalidArgument, err)
 	}
 
+	topologies := []*csi.Topology{
+			{
+				Segments: map[string]string{"beegfs": "true"},
+			},
+	              }
+
 	// Construct an internal representation of the volume.
 	vol := cs.newBeegfsVolume(params.sysMgmtdHost, params.volDirBasePathBeegfsRoot, volName)
 
@@ -125,7 +131,8 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if status, ok := cs.volumeStatusMap.readStatus(vol.volumeID); ok && status == statusCreated {
 		return &csi.CreateVolumeResponse{
 			Volume: &csi.Volume{
-				VolumeId: vol.volumeID,
+				VolumeId:           vol.volumeID,
+				AccessibleTopology: topologies,
 			},
 		}, nil
 	}
@@ -197,7 +204,8 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	cs.volumeStatusMap.writeStatus(vol.volumeID, statusCreated)
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-			VolumeId: vol.volumeID,
+			VolumeId:           vol.volumeID,
+			AccessibleTopology: topologies,
 		},
 	}, nil
 }
